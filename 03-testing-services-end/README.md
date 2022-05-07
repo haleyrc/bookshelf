@@ -1,92 +1,42 @@
-# First model - Solution
+# Testing services - Solution
 
-Hopefully you didn't find the assignment too difficult, but in case you
-struggled or just for a different perspective, I'll walk through how I
-implemented the "get a book" and "get a list of books" actions.
+> Code: [`service_test.go`](./library/service/service_test.go)
+
+This assignment was definitely a step up from previous ones and required a good
+amount of decision-making, so don't be discouraged if what you ended up with
+doesn't look exactly like what I wrote. The important part here is internalizing
+the concepts more than the specific implementation details. That said, let's
+look at some of the more interesting points of my solution:
 
 ## Getting a book
 
-First let's take a look at the code:
-
-```go
-type GetBookRequest struct {
-	ID int64
-}
-
-type GetBookResponse struct {
-	Book *library.Book
-}
-
-func (ls *LibraryService) GetBook(ctx context.Context, req GetBookRequest) (*GetBookResponse, error) {
-	book, err := ls.Store.GetBookByID(ctx, req.ID)
-	if err != nil {
-		return nil, fmt.Errorf("get book: %w", err)
-	}
-
-	return &GetBookResponse{Book: book}, nil
-}
-```
-
-Here you can see that we're accepting an integer ID and returning a single book.
-There are a couple different schools of thought when it comes to querying for
-objects.
-
-Some people prefer a single method that always returns an array and
-it's up to the client to handle it however they see fit. In my opinion, this is
-sub-optimal because it exposes your database to your user. What I mean by that
-is that it doesn't really reflect a real use-case, but is more of a convenience
-for the backend developer who only thinks in terms of a result set. Whenever
-possible, however, I prefer to shoulder the burden of adding additional
-complexity to give my upstream developers a more practical API.
-
-I've also seen a number of APIs that take multiple different query parameters
-when retrieving even a single entity. I find that this rarely works well due to
-the fact that most database columns are not unique so you quickly run into
-decisions about how to handle the case where a query returns more than one
-result where only one was expected. In addition, if you think through the
-frontend use-case, you are usually making a "get one" request for something like
-a details page where you have selected one entity from a list and already know
-its ID. In that case, why not keep our backend API simple while still matching
-our usage pattern?
-
-The only other thing of note in this method is that if you were following my
-"add a book" example very closely, you may have added a log line where I did
-not. This is largely down to taste, but in general I won't log success messages
-in pure queries, but I will in mutations. There's an argument for keeping things
-consistent, but there is rarely anything interesting to log when a client simply
-fetches data.
-
-> It's worth pointing out that this is not the final logging pattern we'll be
-> using in this course, but I want to start thinking about _what_ to log as
-> early as possible even if we don't quite have the _how_ figured out.
+This test ended up looking very similar to the "add a book" test. One major
+deviation is that since we don't have a title and author as part of our service
+request (remember these would come from the database layer in this method), I
+once again hard-coded them into the return value from our `GetBookFn` lambda.
+On the other hand, we _do_ have an ID in our request so we use that in
+`GetBookFn` as well as our assertions.
 
 ## Getting a list of books
 
-The code for getting a list of books is largely the same as what you've already
-seen:
+This test also looks familiar, but that's because it's closer to our initial
+run for the `AddBook` test. Since we don't have any inputs to our service
+method, we also don't have any need to run our assertions multiple times. For
+that reason, we can eschew the table driven test and just test the happy path.
 
-```go
-type GetBooksRequest struct{}
+We also have the new situation where we need to handle a list of results instead
+of a single book in both the `GetBooksFn` method and our response. The store
+case is fairly simple as we just return multiple entities to test against. We
+can be reasonably sure that if our logic works for two results, it will work for
+the `n+1` case.
 
-type GetBooksResponse struct {
-	Books []*library.Book
-}
-
-func (ls *LibraryService) GetBooks(ctx context.Context, req GetBooksRequest) (*GetBooksResponse, error) {
-	books, err := ls.Store.GetBooks(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("get books: %w", err)
-	}
-
-	return &GetBooksResponse{Books: books}, nil
-}
-```
-
-The most interesting thing to note here is that I haven't added any fields to
-our request. This is perfectly acceptable. Not all of our requests will have
-fields, but we still fall back on our service pattern because it allows us to
-add fields later without breaking compatibility.
+For our response assertions, we can just peel off each book and assert against
+them individually. Once again, what works for two likely works for more.
 
 ## Next
 
-Once you feel comfortable with this lesson, you can move on to [Lesson 3: TODO](#).
+Hopefully you were able to get to a working solution, but if not, take some
+extra time to work back through the solution code and solidify any parts that
+remain unclear in your head before moving on.
+
+When you feel ready to proceed, you can start with lesson 4: [TODO](#).

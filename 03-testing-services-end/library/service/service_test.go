@@ -103,7 +103,7 @@ func TestLibraryService_GetBook(t *testing.T) {
 			ctx := context.Background()
 			store := &mockStore{
 				GetBookFn: func(_ context.Context, id int64) (*library.Book, error) {
-					return &library.Book{ID: 123, Title: "Dune", Author: "Frank Herbert"}, nil
+					return &library.Book{ID: id, Title: "Dune", Author: "Frank Herbert"}, nil
 				},
 			}
 			svc := service.LibraryService{Store: store}

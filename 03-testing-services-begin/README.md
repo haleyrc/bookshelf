@@ -674,7 +674,9 @@ it's up to you to implement the tests for the get book and get books cases. As a
 bit of a hint, you'll need to figure out how to implement the mock store
 method and how to assert against a list of results. You'll also need to make a
 determination in both cases about whether it makes sense to use table driven
-tests or not.
+tests or not. And of course you'll need to add validation to the service where
+appropriate.
 
-When you're done, you can check my implementation
-[here](../03-testing-services-end).
+This assignment is a bit involved, so take your time to ensure that you really
+understand _why_ you're doing something. When you're done, you can check my
+implementation [here](../03-testing-services-end).
