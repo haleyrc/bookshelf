@@ -1,6 +1,6 @@
 # Testing services - Solution
 
-> Code: [`service_test.go`](./library/service/service_test.go)
+> Full code: [`service_test.go`](./library/service/service_test.go)
 
 This assignment was definitely a step up from previous ones and required a good
 amount of decision-making, so don't be discouraged if what you ended up with
