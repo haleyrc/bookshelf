@@ -89,4 +89,4 @@ add fields later without breaking compatibility.
 
 ## Next
 
-Once you feel comfortable with this lesson, you can move on to [Lesson 3: Testing Servcie](../03-testing-services-begin).
+Once you feel comfortable with this lesson, you can move on to [Lesson 3: TODO](#).

@@ -22,7 +22,7 @@ decade and justify it to myself. Now on the course!
 
 1. [Scaffolding](./01-scaffolding-begin) ([Solution](./01-scaffolding-end))
 2. [First Model](./02-first-model-begin) ([Solution](./02-first-model-end))
-3. _Service Testing (Upcoming)_
+3. [Testing Services](./03-testing-services-begin) ([Solution](./03-testing-services-end))
 
 ## Resources
 
