@@ -3,9 +3,12 @@ package store_test
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 
 	"github.com/haleyrc/bookshelf/internal/test"
@@ -13,12 +16,27 @@ import (
 	"github.com/haleyrc/bookshelf/library/store"
 )
 
+var ls store.LibraryStore
+
+func TestMain(m *testing.M) {
+	path := filepath.Join("..", "..", ".env")
+	godotenv.Load(path)
+
+	url := os.Getenv("TEST_DATABASE_URL")
+	if url == "" {
+		fmt.Println("set the TEST_DATABASE_URL environment variable to run this test suite")
+		os.Exit(0)
+	}
+	ls.DB = sqlx.MustConnect("postgres", url)
+
+	code := m.Run()
+
+	ls.DB.Close()
+	os.Exit(code)
+}
+
 func TestLibraryStore_CreateBook(t *testing.T) {
 	ctx := context.Background()
-	db := sqlx.MustConnect("postgres", "postgres://postgres:password@localhost:5555/bookshelf?sslmode=disable")
-	ls := store.LibraryStore{DB: db}
-
-	defer db.Close()
 
 	book := library.Book{
 		Title:  "The Lean Startup",

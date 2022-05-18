@@ -454,27 +454,121 @@ by finally getting to that refactoring.
 
 ## Refactor
 
-1. Move to `TestMain`
+At this point, I want to stop and take some time to get our tests into a cleaner
+state. This will not only help fix the issue we ran into above, it will give us
+a way to do a portion of our test setup once and then re-use that setup across
+each of our tests functions. To achieve this, we're going to make use of Go's
+`TestMain` function and a global variable.
+
+> It's important to note here that test code is not compiled into production
+> binaries, to the use of a global here doesn't dirty up our namespace or
+> anything like that. Plus, sometimes you just need a global.
+
+To get started, I'll add the following to the top of my test file:
 
 ```go
+var ls store.LibraryStore
+
 func TestMain(m *testing.M) {
 	ls.DB = sqlx.MustConnect("postgres", "postgres://postgres:password@localhost:5555/bookshelf?sslmode=disable")
-	defer ls.DB.Close()
 
 	code := m.Run()
 
+	ls.DB.Close()
 	os.Exit(code)
 }
 ```
 
-2. Use environment variable for connection string
+This follows the usual `TestMain` layout so no surprises there. What's important
+is that we're setting up a single database connection and a single instance of
+our store. You can now remove the related lines from our
+`TestLibraryStore_CreateBook` function:
+
+```diff
+-db := sqlx.MustConnect("postgres", "postgres://postgres:password@localhost:5555/bookshelf?sslmode=disable")
+-ls := store.LibraryStore{DB: db}
+-
+-defer db.Close()
+```
+
+If you run our test again, you should see that we're back to passing and if you
+inspect the database, you won't see a new row added. So what's going on here?
+We're creating our database connection before any tests run in `TestMain`, then
+we're running our test function that performs some cleanup when it exits
+(specifically, deleting our test book), and _then_ we're closing our database
+connection. By moving the code to close our connection to `TestMain`, we're
+ensuring that all of our cleanup happens as it should. Note that we actually
+removed the defer entirely, since otherwise `os.Exit` would prevent the database
+from being closed. This probably isn't a huge deal since tests don't run
+indefinitely, but it's good practice anyway.
+
+The final refactoring to do is to clean up how we're dealing with our database
+connection string. At the same time, we can put in a safeguard that will prevent
+these tests from being run if there's no database to connect to. To get started,
+I'll create a `.env` file at the root of the project and move our connection
+string into it:
+
+```
+export TEST_DATABASE_URL=postgres://postgres:password@localhost:5555/bookshelf?sslmode=disable
+```
+
+From here, we could do a `source .env` and update the test runner to look for
+the new environment variable and everything should work, but that's pretty\
+ungainly and in a CI environment, we expect our environment variable to already
+be set. To make things easier, we'll pull in another dependency that will parse
+a `.env` file for us and add it to the running context. To do that, run:
+
+```
+$ go get github.com/joho/godotenv
+```
+
+and then modify `TestMain` to look like this:
+
+```go
+func TestMain(m *testing.M) {
+	path := filepath.Join("..", "..", ".env")
+	godotenv.Load(path)
+
+	url := os.Getenv("TEST_DATABASE_URL")
+	if url == "" {
+		fmt.Println("set the TEST_DATABASE_URL environment variable to run this test suite")
+		os.Exit(0)
+	}
+	ls.DB = sqlx.MustConnect("postgres", url)
+
+	code := m.Run()
+
+	ls.DB.Close()
+	os.Exit(code)
+}
+```
+
+The relative paths here are a bit of a bummer, but it's something I can usually
+live with in a test setup. Now we're pulling in our environment variable and
+using that to prevent a test run if we don't have a database to point to.
+
+Now we've got ourselves setup to write as many tests as we need without having
+to manage a database connection every time.
 
 ## Assignment
 
-Add tests and implementation for `GetBookByID` and `GetBooks`.
+The assignment for this lesson is quite a bit more challenging than we've seen
+previously, because it really demands that you think critically about how you
+are interacting with the database and how you would test that interaction. The
+assignment itself is to implement the `GetBookByID` and `GetBooks` methods on
+the store as well as the tests.
+
+Since this assignment is already challenging, I've included a hint in the form
+of another test helper that I wrote for my version. Feel free to ignore it and
+try to tackle it on your own, but if you get stuck, hopefully this will help
+frame your thinking around the testing side of things.
 
 <details>
 <summary>Hint</summary>
+
+In order to test the `GetBooks` method, you need to be able to populate a number
+of test rows and clean them up successfully. To help with this, I added the
+following function to my `store_test.go` file:
 
 ```go
 func createManyBooks(ctx context.Context, t *testing.T, ls store.LibraryStore, params [][]string) ([]int64, error) {
@@ -493,6 +587,8 @@ func createManyBooks(ctx context.Context, t *testing.T, ls store.LibraryStore, p
 }
 ```
 
+You can use it similar to the following snippet:
+
 ```go
 params := [][]string{
     {"Norse Mythology", "Neil Gaiman"},
@@ -505,14 +601,10 @@ if err != nil {
 }
 ```
 
+With this, you should be able to make the necessary assertions to complete the
+test function.
+
 </details>
 
----
-
-1. Migration
-2. Docker compose
-3. Dependencies
-4. First test
-   1. Test helper
-5. Implementation
-6. Assignment
+When you've completed the assignment, compare your approach to mine
+[here](../04-persistence-end).

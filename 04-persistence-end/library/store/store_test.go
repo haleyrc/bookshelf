@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 
 	"github.com/haleyrc/bookshelf/internal/test"
@@ -17,11 +19,19 @@ import (
 var ls store.LibraryStore
 
 func TestMain(m *testing.M) {
-	ls.DB = sqlx.MustConnect("postgres", "postgres://postgres:password@localhost:5555/bookshelf?sslmode=disable")
-	defer ls.DB.Close()
+	path := filepath.Join("..", "..", ".env")
+	godotenv.Load(path)
+
+	url := os.Getenv("TEST_DATABASE_URL")
+	if url == "" {
+		fmt.Println("set the TEST_DATABASE_URL environment variable to run this test suite")
+		os.Exit(0)
+	}
+	ls.DB = sqlx.MustConnect("postgres", url)
 
 	code := m.Run()
 
+	ls.DB.Close()
 	os.Exit(code)
 }
 

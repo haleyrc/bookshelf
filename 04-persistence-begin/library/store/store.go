@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/haleyrc/bookshelf/library"
 	"github.com/jmoiron/sqlx"
+
+	"github.com/haleyrc/bookshelf/library"
 )
 
 type LibraryStore struct {
