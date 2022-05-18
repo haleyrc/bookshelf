@@ -13,23 +13,14 @@ type LibraryStore struct {
 	DB *sqlx.DB
 }
 
-func (s *LibraryStore) CreateBook(ctx context.Context, title, author string) (*library.Book, error) {
+func (s *LibraryStore) CreateBook(ctx context.Context, book *library.Book) error {
 	q := `INSERT INTO books (title, author) VALUES ($1, $2) RETURNING id;`
 
-	var id int64
-	err := s.DB.GetContext(ctx, &id, q, title, author)
+	err := s.DB.GetContext(ctx, &book.ID, q, book.Title, book.Author)
 	if err != nil {
-		return nil, fmt.Errorf("create book: %w", err)
+		return fmt.Errorf("create book: %w", err)
 	}
 
-	return &library.Book{ID: id, Title: title, Author: author}, nil
-}
-
-func (s *LibraryStore) DeleteBook(ctx context.Context, id int64) error {
-	q := `DELETE FROM books WHERE id = $1;`
-	if _, err := s.DB.ExecContext(ctx, q, id); err != nil {
-		return fmt.Errorf("delete book: %w", err)
-	}
 	return nil
 }
 

@@ -5,3 +5,13 @@ services:
     build: .
     ports:
       - "8080:8080"
+  postgres:
+    image: postgres:14.2
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=bookshelf
+    volumes:
+      - ./migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5555:5432"

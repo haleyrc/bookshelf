@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/haleyrc/bookshelf/internal/test"
+	"github.com/haleyrc/bookshelf/library"
 	"github.com/haleyrc/bookshelf/library/store"
 )
 
@@ -26,55 +28,48 @@ func TestMain(m *testing.M) {
 func TestLibraryStore_CreateBook(t *testing.T) {
 	ctx := context.Background()
 
-	createdBook, err := ls.CreateBook(ctx, "The Lean Startup", "Eric Ries")
-	if err != nil {
+	book := library.Book{
+		Title:  "The Lean Startup",
+		Author: "Eric Ries",
+	}
+	if err := ls.CreateBook(ctx, &book); err != nil {
 		t.Fatal("unexpected error:", err)
 	}
 	test.MustCleanup(t, func() error {
-		return ls.DeleteBook(ctx, createdBook.ID)
+		return deleteBook(ctx, t, ls.DB, book.ID)
 	})
 
-	if createdBook.ID == 0 {
+	if book.ID == 0 {
 		t.Errorf("expected id to not be blank, but it was")
 	}
-	if createdBook.Title != "The Lean Startup" {
-		t.Errorf("expected title to be \"The Lean Startup\" but got %q", createdBook.Title)
+	if book.Title != "The Lean Startup" {
+		t.Errorf("expected title to be \"The Lean Startup\" but got %q", book.Title)
 	}
-	if createdBook.Author != "Eric Ries" {
-		t.Errorf("expected author to be \"Eric Ries\" but got %q", createdBook.Author)
-	}
-}
-
-func TestLibraryStore_DeleteBook(t *testing.T) {
-	ctx := context.Background()
-
-	createdBook, err := ls.CreateBook(ctx, "The Lean Startup", "Eric Ries")
-	if err != nil {
-		t.Fatal("unexpected error:", err)
-	}
-
-	if err := ls.DeleteBook(ctx, createdBook.ID); err != nil {
-		t.Fatal("unexpected error:", err)
+	if book.Author != "Eric Ries" {
+		t.Errorf("expected author to be \"Eric Ries\" but got %q", book.Author)
 	}
 }
 
 func TestLibraryStore_GetBookByID(t *testing.T) {
 	ctx := context.Background()
 
-	createdBook, err := ls.CreateBook(ctx, "The Lean Startup", "Eric Ries")
-	if err != nil {
+	book := library.Book{
+		Title:  "The Lean Startup",
+		Author: "Eric Ries",
+	}
+	if err := ls.CreateBook(ctx, &book); err != nil {
 		t.Fatal("unexpected error:", err)
 	}
 	test.MustCleanup(t, func() error {
-		return ls.DeleteBook(ctx, createdBook.ID)
+		return deleteBook(ctx, t, ls.DB, book.ID)
 	})
 
-	gotBook, err := ls.GetBookByID(ctx, createdBook.ID)
+	gotBook, err := ls.GetBookByID(ctx, book.ID)
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
-	if gotBook.ID != createdBook.ID {
-		t.Errorf("expected id to be %d but got %d", createdBook.ID, gotBook.ID)
+	if gotBook.ID != book.ID {
+		t.Errorf("expected id to be %d but got %d", book.ID, gotBook.ID)
 	}
 	if gotBook.Title != "The Lean Startup" {
 		t.Errorf("expected title to be \"The Lean Startup\" but got %q", gotBook.Title)
@@ -122,14 +117,22 @@ func TestLibraryStore_GetBooks(t *testing.T) {
 func createManyBooks(ctx context.Context, t *testing.T, ls store.LibraryStore, params [][]string) ([]int64, error) {
 	ids := []int64{}
 	for _, p := range params {
-		b, err := ls.CreateBook(ctx, p[0], p[1])
-		if err != nil {
+		b := library.Book{Title: p[0], Author: p[1]}
+		if err := ls.CreateBook(ctx, &b); err != nil {
 			return nil, err
 		}
 		test.MustCleanup(t, func() error {
-			return ls.DeleteBook(ctx, b.ID)
+			return deleteBook(ctx, t, ls.DB, b.ID)
 		})
 		ids = append(ids, b.ID)
 	}
 	return ids, nil
+}
+
+func deleteBook(ctx context.Context, t *testing.T, db *sqlx.DB, id int64) error {
+	q := `DELETE FROM books WHERE id = $1;`
+	if _, err := db.ExecContext(ctx, q, id); err != nil {
+		return fmt.Errorf("delete book: %w", err)
+	}
+	return nil
 }
