@@ -2,6 +2,44 @@
 
 > TODO: Talk about the modification to the `service.LibraryStore` interface.
 
+> Before we start with the lesson proper, I need to address a small change I
+> made to some of the code from the previous lessons. If you'll remember, we
+> had previously defined a `LibraryStore` interface in our service package that
+> looked something like this:
+>
+> ```go
+> type LibraryStore interface {
+> 	CreateBook(ctx context.Context, title, author string) (*library.Book, error)
+> 	GetBookByID(ctx context.Context, id int64) (*library.Book, error)
+> 	GetBooks(ctx context.Context) ([]*library.Book, error)
+> }
+> ```
+>
+> There's nothing wrong with this setup and I wrote many database layers that
+> followed this pattern. Recently, however, I have changed how I think about the
+> parameters and return values of store methods and today I would prefer to
+> write this as:
+>
+> ```diff
+> type LibraryStore interface {
+> -	CreateBook(ctx context.Context, title, author string) (*library.Book, error)
+> +	CreateBook(ctx context.Context, book *library.Book) error
+> 	GetBookByID(ctx context.Context, id int64) (*library.Book, error)
+> 	GetBooks(ctx context.Context) ([]*library.Book, error)
+> }
+> ```
+>
+> With this pattern, we are passing a domain object to the persistence layer
+> fully-formed, rather than relying on the persistence layer to return the
+> object to us. In our small example, the differences are pretty minimal, but I
+> find that this matches my mental model for how this operation should work much
+> more closely.
+>
+> Future lessons will use the new pattern, but I'll be leaving the existing
+> lessons as-is for now to prevent any confusion. Make sure you take a look at
+> the full service implementaion, since our call to `CreateBook` also has to
+> change to keep everything working.
+
 Following from our previous lesson, we've got a decent service started and at
 this point I think it's time to start talking about persisting our "models" to a
 database. There are a lot of different databases to choose from and often the

@@ -9,7 +9,7 @@ import (
 )
 
 type LibraryStore interface {
-	CreateBook(ctx context.Context, title, author string) (*library.Book, error)
+	CreateBook(ctx context.Context, book *library.Book) error
 	GetBookByID(ctx context.Context, id int64) (*library.Book, error)
 	GetBooks(ctx context.Context) ([]*library.Book, error)
 }
@@ -35,13 +35,16 @@ func (ls *LibraryService) AddBook(ctx context.Context, req AddBookRequest) (*Add
 		return nil, fmt.Errorf("add book: author can't be blank")
 	}
 
-	book, err := ls.Store.CreateBook(ctx, req.Title, req.Author)
-	if err != nil {
+	book := library.Book{
+		Title:  req.Title,
+		Author: req.Author,
+	}
+	if err := ls.Store.CreateBook(ctx, &book); err != nil {
 		return nil, fmt.Errorf("add book: %w", err)
 	}
 	log.Printf("added book %d: %s\n", book.ID, book.Title)
 
-	return &AddBookResponse{Book: book}, nil
+	return &AddBookResponse{Book: &book}, nil
 }
 
 type GetBookRequest struct {
