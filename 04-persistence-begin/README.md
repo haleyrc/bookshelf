@@ -549,7 +549,7 @@ export TEST_DATABASE_URL=postgres://postgres:password@localhost:5555/bookshelf?s
 ```
 
 From here, we could do a `source .env` and update the test runner to look for
-the new environment variable and everything should work, but that's pretty\
+the new environment variable and everything should work, but that's pretty
 ungainly and in a CI environment, we expect our environment variable to already
 be set. To make things easier, we'll pull in another dependency that will parse
 a `.env` file for us and add it to the running context. To do that, run:
