@@ -1,2 +1,5 @@
 bin/
 final/
+.env
+*.patch
+*.diff

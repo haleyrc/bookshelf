@@ -39,4 +39,5 @@ Hopefully you were able to get to a working solution, but if not, take some
 extra time to work back through the solution code and solidify any parts that
 remain unclear in your head before moving on.
 
-When you feel ready to proceed, you can start with lesson 4: [TODO](#).
+When you feel ready to proceed, you can start with lesson 4:
+[Persistence](../04-persistence-begin).
