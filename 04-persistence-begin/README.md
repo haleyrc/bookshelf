@@ -1,7 +1,5 @@
 # Persistence
 
-> TODO: Talk about the modification to the `service.LibraryStore` interface.
-
 > Before we start with the lesson proper, I need to address a small change I
 > made to some of the code from the previous lessons. If you'll remember, we
 > had previously defined a `LibraryStore` interface in our service package that
